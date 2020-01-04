@@ -30,6 +30,7 @@ H5不支持本地存储机制
 
 | 版本号| 更新说明|
 | --------- | -------- |
+| v3.0.3| 优化图片生成速度, 发现canvasToTempFilePath默认生成图片类型为png, 而png为无损图片类型，所以图片体积较大，而修改为jpg类型后可大幅度提升图片生成速度, 若有需要可传setCanvasToTempFilePath参数控制 |
 | v3.0.1| 1.drawArray类型项内属性新增`allInfoCallback`属性，可以获取drawArray绘制序列全部的详细信息, 并相应新增serialNum属性用于控制顺序, 详见[2.0.8 drawArray参数详解](#drawArray), 示例在示例项目中绘制的第二段文字 <br /> 2.新增属性formData，用于app.js中的获取背景图方法的携带数据 <br />3.image类型新增alpha参数用于控制透明度[0, 1]|
 | v3.0.0| 1.版本号更改为3.0.0开始<br />2.新增`可控层级绘制序列-drawArray`, 建议使用该序列绘制, 该属性可直接return数组，也可以return一个promise对象, 但最终resolve一个数组, 这样就可以方便实现后台可控绘制海报 详见2. <br />3.新增 delayTimeScale(生成图片时延时系数)、 drawDelayTime(draw方法延时时间)等属性，控制延时, 详见2. <br />4.`注意`, 引入js写法改成 `import { getSharePoster } from '@/util/QS-SharePoster/QS-SharePoster.js';`<br />5.新增_this属性，组件中使用时必传,详见2.<br />6.修复有时绘制圆形或矩形圆角图片不生效问题|
 | ...| [`查看历次更新`](#oldUpdate) |
@@ -80,7 +81,7 @@ H5不支持本地存储机制
 | qrCodeArray| | Array \| Function| | 需绘制的二维码数组，若传入的类型为Function，则可以接收一个对象, 该对象有三个参数，bgObj是背景图片的宽高等信息，type是自定义标识type，bgScale是背景图片宽高缩放比例, 且必须return一个数组，推荐传入Function类型, `详见2.0.1`|
 | imagesArray| | Array \| Function | |需绘制的图片数组，若传入的类型为Function，则可以接收一个对象, 该对象有三个参数，bgObj是背景图片的宽高等信息，type是自定义标识type，bgScale是背景图片宽高缩放比例, 且必须return一个数组，推荐传入Function类型,`详见2.0.2` |
 | setCanvasWH| （一般来说）是| Function | | 动态设置画布宽高的方法，该方法返回一个对象, 该对象有三个参数，bgObj是背景图片的宽高等信息，type是自定义标识type，bgScale是背景图片宽高缩放比例, 可以根据背景图给画布定宽高，`详见2.0.3` |
-| setCanvasToTempFilePath| | Function  | | 设置绘制完毕后的生成海报临时路径参数,该参数有默认, 一般可以不用填, `详见 2.0.4`|
+| setCanvasToTempFilePath| | Object\|Function  | | 设置绘制完毕后的生成海报临时路径参数,该参数有默认, 一般可以不用填, `详见 2.0.4`|
 | setDraw| | Function | | 自定义绘制方法，该方法接收一个对象, `详见 2.0.5` |
 | background| | Object| | 背景图对象, `详见 2.0.6` |
 | textArray| |  Array \| Function| | 需绘制的文本数组，若传入的类型为Function，则可以接收两个参数，第一个参数是背景图片的宽高等信息，第二个参数为自定义标识type ， 且必须return一个数组，推荐传入Function类型, `详见 2.0.7` |
