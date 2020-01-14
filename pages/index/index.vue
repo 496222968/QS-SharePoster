@@ -38,7 +38,6 @@
 			async shareFc() {
 				try {
 					console.log('准备生成:' + new Date())
-					// console.time('计算海报生成时间');
 					const d = await getSharePoster({
 						_this: this, //若在组件中使用 必传
 						type: 'testShareType',
@@ -175,7 +174,6 @@
 							this.poster = bgObj;
 						}
 					});
-					console.timeEnd('计算海报生成时间结果');
 					console.log('海报生成成功, 时间:' + new Date() + '， 临时路径: ' + d.poster.tempFilePath)
 					this.poster.finalPath = d.poster.tempFilePath;
 					this.qrShow = true;

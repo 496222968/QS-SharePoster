@@ -30,7 +30,7 @@ H5不支持本地存储机制
 
 | 版本号| 更新说明|
 | --------- | -------- |
-| v3.0.3| 优化图片生成速度, 发现canvasToTempFilePath默认生成图片类型为png, 而png为无损图片类型，所以图片体积较大，而修改为jpg类型后可大幅度提升图片生成速度, 若有需要可传setCanvasToTempFilePath参数控制 |
+| v3.0.3|  优化图片生成速度 感谢QQ:6633667小伙伴发现此问题, 发现canvasToTempFilePath默认生成图片类型为png, 而png为无损图片类型，所以图片体积较大，而修改为jpg类型后可大幅度提升图片生成速度, 若有需要可传setCanvasToTempFilePath参数控制 |
 | v3.0.1| 1.drawArray类型项内属性新增`allInfoCallback`属性，可以获取drawArray绘制序列全部的详细信息, 并相应新增serialNum属性用于控制顺序, 详见[2.0.8 drawArray参数详解](#drawArray), 示例在示例项目中绘制的第二段文字 <br /> 2.新增属性formData，用于app.js中的获取背景图方法的携带数据 <br />3.image类型新增alpha参数用于控制透明度[0, 1]|
 | v3.0.0| 1.版本号更改为3.0.0开始<br />2.新增`可控层级绘制序列-drawArray`, 建议使用该序列绘制, 该属性可直接return数组，也可以return一个promise对象, 但最终resolve一个数组, 这样就可以方便实现后台可控绘制海报 详见2. <br />3.新增 delayTimeScale(生成图片时延时系数)、 drawDelayTime(draw方法延时时间)等属性，控制延时, 详见2. <br />4.`注意`, 引入js写法改成 `import { getSharePoster } from '@/util/QS-SharePoster/QS-SharePoster.js';`<br />5.新增_this属性，组件中使用时必传,详见2.<br />6.修复有时绘制圆形或矩形圆角图片不生效问题|
 | ...| [`查看历次更新`](#oldUpdate) |
@@ -256,7 +256,7 @@ setCanvasWH: ({bgObj, type, bgScale}) => { // 为动态设置画布宽高的方�
 | height|   | Number|  |  画布高度（默认为canvas高度-y） |
 | destWidth|   | Number|  | 输出图片宽度（默认为 width * 屏幕像素密度） |
 | destHeight|   | Number|  |  输出图片高度（默认为 height * 屏幕像素密度） |
-| fileType|   | String|  |  目标文件的类型，只支持 'jpg' 或 'png'。默认为 'png' |
+| fileType|   | String|  jpg|  目标文件的类型，只支持 'jpg' 或 'png' |
 | quality|   | Number| .8 |   图片的质量，取值范围为 (0, 1]，不在范围内时当作1.0处理 |
 
 注：v11.0版本后该参数为拓展覆盖，所以无需所有参数都传
