@@ -7,7 +7,7 @@ var isMp = false;
 isMp = true;
 // #endif
 
-
+var nbgScale = 1;
 // export default 
 function getSharePoster(obj) {
 	return new Promise(async (resolve, reject) => {
@@ -16,9 +16,13 @@ function getSharePoster(obj) {
 			resolve(result1);
 		} catch (e) {
 			//TODO handle the exception
-			removePosterStorage(obj.type);
 			try {
-				_app.log('------------清除缓存后, 开始第二次尝试------------');
+				if(obj.bgScale) {
+					obj.bgScale = Number(obj.bgScale) - 0.1
+				}else{
+					nbgScale = nbgScale - 0.1
+				}
+				console.log('------------清除缓存后, 开始第二次尝试------------');
 				const result2 = await returnPromise(obj);
 				resolve(result2);
 			} catch (e) {
@@ -68,8 +72,7 @@ function returnPromise(obj) {
 					formData
 				});
 			}
-			// 为了ios 缩放一些
-			bgScale = bgScale || .75;
+			bgScale = bgScale || nbgScale;
 			bgObj.width = bgObj.width * bgScale;
 			bgObj.height = bgObj.height * bgScale;
 
@@ -77,9 +80,15 @@ function returnPromise(obj) {
 			const params = {
 				bgObj,
 				type,
-				bgScale
+				bgScale,
+				getBgObj: function() {
+					return params.bgObj;
+				},
+				setBgObj: function(newBgObj){
+					params.bgObj = newBgObj;
+					bgObj = newBgObj
+				}
 			};
-			if (setCanvasWH && typeof(setCanvasWH) == 'function') setCanvasWH(params);
 			if (imagesArray) {
 				if (typeof(imagesArray) == 'function')
 					imagesArray = imagesArray(params);
@@ -154,13 +163,14 @@ function returnPromise(obj) {
 							const b_serialNum = !_app.isUndef(b.serialNum) && !_app.isNull(b.serialNum) ? Number(b.serialNum) : Number.NEGATIVE_INFINITY;
 							return a_serialNum - b_serialNum;
 						})
+						_app.log('开始for循环');
 
 						for (let i = 0; i < drawArray_copy.length; i++) {
 							const item = { ...drawArray_copy[i]
 							};
 							if (_app.isFn(item.allInfoCallback)) {
 								let newData = item.allInfoCallback({
-									drawArray: drawArray_copy
+									drawArray
 								});
 								if (_app.isPromise(newData)) newData = await newData;
 								const item_idKey = item[idKey];
@@ -173,8 +183,18 @@ function returnPromise(obj) {
 								}
 							}
 						}
+						_app.log('for循环结束');
 					}
 				}
+			}
+			console.log('params:' + JSON.stringify(params))
+			if (setCanvasWH && typeof(setCanvasWH) == 'function') {
+				await new Promise((resolve, reject)=>{
+					setCanvasWH(params);
+					setTimeout(()=>{
+						resolve();
+					}, 50)
+				})
 			}
 			const poster = await drawShareImage({
 				Context,
@@ -299,7 +319,9 @@ function drawShareImage(obj) { //绘制海报方法
 			}
 			_app.showLoading('绘制中')
 			setTimeout(() => {
-				Context.draw((typeof(reserve) == 'boolean' ? reserve : false), function(){
+				_app.log('准备执行draw方法')
+				_app.log('Context:' + Context);
+				const fn = function(){
 					_app.showLoading('正在输出图片');
 					let setObj = setCanvasToTempFilePath || {};
 					if (setObj && typeof(setObj) == 'function')
@@ -310,7 +332,7 @@ function drawShareImage(obj) { //绘制海报方法
 						_app.hideLoading();
 						rs({
 							tempFilePath: document.querySelector(`uni-canvas[canvas-id=${posterCanvasId}]>canvas`).toDataURL(
-								'image/jpeg', setObj.quality || .8)
+								`image/${setObj.fileType||'jpg'}`, setObj.quality || .8)
 						});
 					}
 					// #endif
@@ -379,7 +401,8 @@ function drawShareImage(obj) { //绘制海报方法
 					_app.log('延时系数:' + delayTimeScale);
 					_app.log('总计延时:' + delayTime);
 					setTimeout(canvasToTempFilePathFn, delayTime);
-				});
+				}
+				Context.draw((typeof(reserve) == 'boolean' ? reserve : false), fn);
 			}, drawDelayTime);
 		} catch (e) {
 			//TODO handle the exception
@@ -412,13 +435,13 @@ function setTextFn(Context, textItem) {
 	_app.log('进入设置文字方法, textItem:' + JSON.stringify(textItem));
 	if (_app.isNotNull_string(textItem.text)) {
 		textItem.text = String(textItem.text);
-		textItem.alpha = textItem.alpha !== undefined ? textItem.alpha : 1;
+		textItem.alpha = textItem.alpha !== undefined ? Number(textItem.alpha) : 1;
 		textItem.color = textItem.color || 'black';
-		textItem.size = textItem.size !== undefined ? textItem.size : 10;
+		textItem.size = textItem.size !== undefined ? Number(textItem.size) : 10;
 		textItem.textAlign = textItem.textAlign || 'left';
 		textItem.textBaseline = textItem.textBaseline || 'middle';
-		textItem.dx = textItem.dx || 0;
-		textItem.dy = textItem.dy || 0;
+		textItem.dx = Number(textItem.dx) || 0;
+		textItem.dy = Number(textItem.dy) || 0;
 		textItem.size = Math.ceil(Number(textItem.size));
 		_app.log('字符串信息-初始化默认值后:' + JSON.stringify(textItem));
 		const textLength = countTextLength(Context, {
@@ -448,12 +471,12 @@ function countTextLength(Context, obj) {
 	} = obj;
 	Context.setFontSize(size);
 	let textLength;
-	/* try{
+	try{
 		textLength = Context.measureText(text); // 官方文档说 App端自定义组件编译模式暂时不可用measureText方法
 	}catch(e){
 		//TODO handle the exception
 		textLength = {};
-	} */
+	}
 	textLength = {};
 	_app.log('measureText计算文字长度, textLength:' + JSON.stringify(textLength));
 	textLength = textLength && textLength.width ? textLength.width : 0;
@@ -692,10 +715,10 @@ function setImageFn(image) {
 					...image.infoCallBack(imageInfo)
 				};
 			}
-			image.dx = image.dx || 0;
-			image.dy = image.dy || 0;
-			image.dWidth = image.dWidth || imageInfo.width;
-			image.dHeight = image.dHeight || imageInfo.height;
+			image.dx = Number(image.dx) || 0;
+			image.dy = Number(image.dy) || 0;
+			image.dWidth = Number(image.dWidth || imageInfo.width);
+			image.dHeight = Number(image.dHeight || imageInfo.height);
 			image = {
 				...image,
 				imageInfo
@@ -918,17 +941,17 @@ function drawImageFn(Context, img) {
 		_app.log('绘制默认图片方法, 有url');
 		if (img.dWidth && img.dHeight && img.sx && img.sy && img.sWidth && img.sHeight) {
 			_app.log('绘制默认图片方法, 绘制第一种方案');
-			Context.drawImage(img.url, img.dx || 0, img.dy || 0,
-				img.dWidth || false, img.dHeight || false,
-				img.sx || false, img.sy || false,
-				img.sWidth || false, img.sHeight || false);
+			Context.drawImage(img.url, Number(img.dx || 0), Number(img.dy || 0),
+				Number(img.dWidth) || false, Number(img.dHeight) || false,
+				Number(img.sx) || false, Number(img.sy) || false,
+				Number(img.sWidth) || false, Number(img.sHeight) || false);
 		} else if (img.dWidth && img.dHeight) {
 			_app.log('绘制默认图片方法, 绘制第二种方案');
-			Context.drawImage(img.url, img.dx || 0, img.dy || 0,
-				img.dWidth || false, img.dHeight || false);
+			Context.drawImage(img.url, Number(img.dx || 0), Number(img.dy || 0),
+				Number(img.dWidth) || false, Number(img.dHeight) || false);
 		} else {
 			_app.log('绘制默认图片方法, 绘制第三种方案');
-			Context.drawImage(img.url, img.dx || 0, img.dy || 0);
+			Context.drawImage(img.url, Number(img.dx || 0), Number(img.dy || 0));
 		}
 		if (hasAlpha) {
 			Context.setGlobalAlpha(1);
@@ -1106,6 +1129,7 @@ function drawQrCode(Context, qrCodeObj) { //生成二维码方法， 参考了 �
 			}
 		}
 	}
+	_app.log('进入绘制二维码方法完毕')
 	_app.hideLoading();
 }
 
@@ -1118,63 +1142,9 @@ function getShreUserPosterBackground(objs) { //检查背景图是否存在于本
 	return new Promise(async (resolve, reject) => {
 		try {
 			_app.showLoading('正在获取海报背景图');
-			let pbg;
-			// #ifndef H5
-			pbg = getPosterStorage(type);
-			// #endif
-			// #ifdef H5
-			pbg = false;
-			// #endif
-			_app.log('获取的缓存:' + JSON.stringify(pbg));
-			if (pbg && pbg.path && pbg.name) {
-				_app.log('海报有缓存, 准备获取后端背景图进行对比');
-				const image = await _app.getPosterUrl(objs);
-				_app.log('准备对比name是否相同');
-				if (pbg.name === _app.fileNameInPath(image)) {
-					_app.log('name相同, 判断该背景图是否存在于本地')
-					const index = await _app.checkFile_PromiseFc(pbg.path)
-					if (index >= 0) {
-						_app.log('海报save路径存在, 对比宽高信息, 存储并输出');
-						const imageObj = await _app.getImageInfo_PromiseFc(pbg.path);
-						let obj = { ...pbg
-						};
-						if (!pbg.width || !pbg.height || pbg.width !== imageObj.width || pbg.height !== imageObj.height) {
-							_app.log('宽高对比不通过， 重新获取');
-							const savedFilePath = await getShreUserPosterBackgroundFc(objs, image)
-							_app.hideLoading();
-							resolve(savedFilePath);
-						} else {
-							_app.log('宽高对比通过, 再次存储, 并返回路径');
-							obj = {
-								...pbg,
-								width: imageObj.width,
-								height: imageObj.height
-							};
-							// #ifndef H5
-							setPosterStorage(type, { ...obj
-							});
-							// #endif
-							_app.hideLoading();
-							resolve(obj);
-						}
-					} else {
-						_app.log('海报save路径不存在, 重新获取海报');
-						const savedFilePath = await getShreUserPosterBackgroundFc(objs, image)
-						_app.hideLoading();
-						resolve(savedFilePath);
-					}
-				} else {
-					_app.log('name不相同, 重新获取海报');
-					const savedFilePath = await getShreUserPosterBackgroundFc(objs, image)
-					_app.hideLoading();
-					resolve(savedFilePath);
-				}
-			} else {
-				_app.log('海报背景图没有缓存, 准备获取海报背景图');
-				const savedFilePath = await getShreUserPosterBackgroundFc(objs)
-				_app.hideLoading();
-				resolve(savedFilePath);
-			}
+			const savedFilePath = await getShreUserPosterBackgroundFc(objs)
+			_app.hideLoading();
+			resolve(savedFilePath);
 		} catch (e) {
 			_app.hideLoading();
 			_app.showToast('获取分享用户背景图失败:' + JSON.stringify(e));
@@ -1192,7 +1162,6 @@ function removePosterStorage(type) {
 	const ShreUserPosterBackgroundKey = getStorageKey(type);
 	const pbg = _app.getStorageSync(ShreUserPosterBackgroundKey);
 	if (pbg && pbg.path) {
-		_app.removeSavedFile(pbg.path);
 		_app.removeStorageSync(ShreUserPosterBackgroundKey);
 	}
 }
@@ -1211,7 +1180,6 @@ function getShreUserPosterBackgroundFc(objs, upimage) { //下载并保存背景�
 		type
 	} = objs;
 	_app.log('获取分享背景图, 尝试清空本地数据');
-	removePosterStorage(type);
 	return new Promise(async (resolve, reject) => {
 		try {
 			_app.showLoading('正在下载海报背景图');

@@ -6,6 +6,22 @@
 				"navigationBarTitleText": "uni-app"
 			}
 		}
+        ,{
+            "path" : "pages/common/common",
+            "style" : {}
+        }
+        ,{
+            "path" : "pages/infoCallBack/infoCallBack",
+            "style" : {}
+        }
+        ,{
+            "path" : "pages/allInfoCallback/allInfoCallback",
+            "style" : {}
+        }
+        ,{
+            "path" : "pages/setBgObjAndGetBgObj/setBgObjAndGetBgObj",
+            "style" : {}
+        }
     ],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",

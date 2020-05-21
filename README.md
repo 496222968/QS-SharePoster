@@ -18,26 +18,14 @@
 
 # 警告
 `小程序中请注意自己的获取图片信息的api--getImageInfo 是否正常获取图片信息，否则绘制不出来`
-<br />
-H5不支持本地存储机制
+`重要:`如果小程序有绘制微信用户头像需求的, 把https://thirdwx.qlogo.cn、https://wx.qlogo.cn都配置到小程序后台下载域名去
 
 ## `目前请使用网络图片!`
 
 # 兼容性
 ### APP、微信小程序、H5
 
-#  更新说明
-
-| 版本号| 更新说明|
-| --------- | -------- |
-| v3.0.3|  优化图片生成速度 感谢QQ:6633667小伙伴发现此问题, 发现canvasToTempFilePath默认生成图片类型为png, 而png为无损图片类型，所以图片体积较大，而修改为jpg类型后可大幅度提升图片生成速度, 若有需要可传setCanvasToTempFilePath参数控制 |
-| v3.0.1| 1.drawArray类型项内属性新增`allInfoCallback`属性，可以获取drawArray绘制序列全部的详细信息, 并相应新增serialNum属性用于控制顺序, 详见[2.0.8 drawArray参数详解](#drawArray), 示例在示例项目中绘制的第二段文字 <br /> 2.新增属性formData，用于app.js中的获取背景图方法的携带数据 <br />3.image类型新增alpha参数用于控制透明度[0, 1]|
-| v3.0.0| 1.版本号更改为3.0.0开始<br />2.新增`可控层级绘制序列-drawArray`, 建议使用该序列绘制, 该属性可直接return数组，也可以return一个promise对象, 但最终resolve一个数组, 这样就可以方便实现后台可控绘制海报 详见2. <br />3.新增 delayTimeScale(生成图片时延时系数)、 drawDelayTime(draw方法延时时间)等属性，控制延时, 详见2. <br />4.`注意`, 引入js写法改成 `import { getSharePoster } from '@/util/QS-SharePoster/QS-SharePoster.js';`<br />5.新增_this属性，组件中使用时必传,详见2.<br />6.修复有时绘制圆形或矩形圆角图片不生效问题|
-| ...| [`查看历次更新`](#oldUpdate) |
-
-# 示例代码请下载示例项目查看
-
-#  1. 使用说明
+#  1. 相关说明
 ## 1.0.0画布相关
 ```
 首先目前有两种方式, 根据背景图绘制和自定义画布绘制,
@@ -47,6 +35,9 @@ H5不支持本地存储机制
 		b、传参backgroundImage为图片地址
 2、自定义画布绘制
 	该方式需传background属性, 根据其属性控制画布的大小颜色
+
+优先级: background> backgroundImage> app.js-getSharePoster()
+注: 所以如果传了backgroundImage就不会去app.js获取背景图片, 如果传了background就不会绘制背景图片
 ```
 ## 1.0.1布局相关
 ```
@@ -64,19 +55,17 @@ H5不支持本地存储机制
 
 注意: 若没有自行控制画布宽高，则应该设置setCanvasWH方法并设置画布宽高
 
-本地存储机制: 背景图从后端获取后会以‘/’字符分割后的最后一位为name，QS-SharePoster会判断此name是不是和本地相同，若不同则从后端获取重新生成，若相同则使用本地路径，name判断通过后，还会判断图片宽高信息，不通过则重新获取，所以， 若后端需换背景图，则将新上传的图片命名不要相同与前一次, 或宽高不同于前一次即可
-
 ```
 
 # 2. 传入参数详解
 
-`注：所有传入的图片路径可以是网络路径也可以是本地路径, 本地图片与网络图片的区分是以图片路径字符串substring(0, 4)是否为http来判断的`
+`注：所有传入的图片路径都为网络图片`
 
 | 属性名 | 是否必填 | 值类型 | 默认值 | 说明 |
 | --------- | -------- | -----: | --: | --: |
 | posterCanvasId | 是 |  String |  | 页面中绘制海报的画布的id |
 | type |   | all|    |   自定义标识，用于逻辑判断 |
-| backgroundImage |  | String |  | 背景图片路径，优先级大于app.js中getPosterUrl方法返回的路径，`一般不建议使用` |
+| backgroundImage |  | String |  | 背景图片路径，优先级大于app.js中getPosterUrl方法返回的路径 |
 | reserve| | Boolean | false | 本次绘制是否接着上一次绘制 |
 | qrCodeArray| | Array \| Function| | 需绘制的二维码数组，若传入的类型为Function，则可以接收一个对象, 该对象有三个参数，bgObj是背景图片的宽高等信息，type是自定义标识type，bgScale是背景图片宽高缩放比例, 且必须return一个数组，推荐传入Function类型, `详见2.0.1`|
 | imagesArray| | Array \| Function | |需绘制的图片数组，若传入的类型为Function，则可以接收一个对象, 该对象有三个参数，bgObj是背景图片的宽高等信息，type是自定义标识type，bgScale是背景图片宽高缩放比例, 且必须return一个数组，推荐传入Function类型,`详见2.0.2` |
@@ -117,6 +106,8 @@ H5不支持本地存储机制
 | `type为custom时`| | |  |  |
 | setDraw| | |  | 该属性传入一个方法，接收一个参数-画布对象，可在方法中自定义绘制内容|
 
+注: 当drawArray为function时，v3.0.5新增setBgObj与getBgObj方法，详见示例项目
+
 ## 2.0.1 qrCodeArray参数详解 <span id="qrcodeArray" />
 ```
 该参数可以是一个数组，也可以是一个方法, `若传入一个方法，则必须return一个数组`
@@ -132,7 +123,7 @@ H5不支持本地存储机制
 | background|   | String |  |  二维码背景色 |
 | foreground|   | String |  |  二维码前景色 |
 | correctLevel|   | Number |  |  二维码容错级别 |
-| image|   | String |  |  二维码中心的图片，可以是网络路径也可以是本地路径 |
+| image|   | String |  |  二维码中心的图片 |
 | imageSize|   | Number |  |   二维码图标大小 |
 
 传入为Function类型示例代码: (推荐使用Function类型)
@@ -162,7 +153,7 @@ qrCodeArray: ({bgObj, type, bgScale}) => {
 
 | 属性名 | 是否必填 | 值类型 | 默认值 | 说明 |
 | --------- | -------- | -----: | --: | --: |
-| url| 是 |  String |  | 图片路径，可以是网络路径也可以是本地路径 |
+| url| 是 |  String |  | 网络图片路径 |
 | dx|   | Number|  |  图像的左上角在目标canvas上 X 轴的位置 |
 | dy|   | Number|  |  图像的左上角在目标canvas上 Y 轴的位置 |
 | dWidth|   | Number|  |  在目标画布上绘制图像的宽度，允许对绘制的图像进行缩放 |
@@ -409,29 +400,3 @@ textArray: ({bgObj, type, bgScale}) => {
 | --------- | ---- |
 | normal | 默认值。定义标准的字符。 |
 | bold | 定义粗体字符。 |
-
-
-#  历次更新说明 <span id="oldUpdate"/>
-
-| 版本号| 更新说明|
-| --------- | -------- |
-| v21.0| 修复小程序中二维码绘制错乱问题，参考了诗小柒的源码对输出图片进行延时 |
-| v20.0| 微信小程序自动判断图片是否为https(比如 从微信获取用户信息，头像的路径是http开头的，在获取图片信息或下载的时候将自动转为https) |
-| v19.0| textArray新增字体设置，详见2.0.7 |
-| v18.0| 修复部分机型textArray设置文字大小带小数时绘制不出的问题,  设置的文字若携带小数， 会向上取整 非常感谢@QQ：447611296 小伙伴查到此问题的原因， 不过 因为在下这边无法重现问题， 还请小伙伴们测试一下 |
-| v17.0| 1、修复textArray中没有传infocallBack返回dx、dy时不绘制的问题<br />2、`修改` 修改imageArray、textArray、qrCodeArray、setDraw等属性类型为Function时，回调函数的参数`更改`为一个对象类型数据，该对象一般拥有bgObj、type、bgScale三个参数, `当布局不使用画布的宽高动态布局并且参照原设计图尺寸绘制时，则需将最终数值乘以bgScale`<br />3、新增Context属性， 传入画布对象, （一般不用） |
-| v16.0| 1、imageArray新增roundRectSet属性，用于设置圆角矩形图片, 详见2.0.2<br />2、修复小程序真机无法绘制图片问题, 原来小程序还是要下载图片以后才能绘制的<br />3、imageArray的circleSet废弃circle参数，circleSet参数可以传Boolean类型，也可以传Object类型<br />4、修复第二次绘制海报时文字错位问题  |
-| v15.0| 修复lineFeed设置lineHeight属性时 也会对第一行文字的dy属性设置, 导致布局不准确的问题  |
-| v14.0| 修复IOS无法绘制问题，增加了bgScale参数来缩放背景图，所以一般布局最好使用背景图的宽高来进行布局 , 详见2. (但是 ， 仍需测试)  |
-| v13.0| textArray新增换行功能(与QQ：1219848990小伙伴一起写的, 感谢!), 详见2.0.7   |
-| v12.0| 1、新增textArray属性， 详见2.0.7<br />2、QS-SharePoster.js中除了默认导出的主方法外，还导出了setTextArray(设置文本数据)、 setImagesArray(设置图片数据)、drawText(绘制文本)、drawImage(绘制图片)、 drawQrCode(绘制二维码)等方法, 第一个参数传入画布对象，第二个参数传入对应数据，即可使用   |
-| v11.0| 1、H5支持setCanvasToTempFilePath属性中的quality属性, 若图片生成慢可以调整图片生成的质量, 默认0.8<br />2、新增background属性, 详见2.0.6<br />3、所绘制的图片除背景图外均不在下载(发现原来不用下载也能绘制上去, 所以注释了下载图片的代码)  |
-| v10.0| 1、优化H5图片生成方式， 非常感谢QQ：624823464小伙伴解决并提供的此问题<br />2、示例项目中为H5增加本地图片示例<br />3、新增console打印管理, 详见app.js的log属性  |
-| v9.0| 修复H5生成的图片尺寸问题, 感谢qq: 2548017453  |
-| v8.0| 疑似修复H5， 因为跨域问题没有继续测试， 还请有用到H5的小伙伴测试一下  |
-| v7.0| 修复背景图片不能使用本地图片问题, 若使用本地路径图片, 建议写绝对路径, 注：网络图片与本地图片的区分是以图片路径字符串substring(0, 4)是否为http来判断的  |
-| v6.0| 修复QS-SharePoster.js文件中281行的传参不正确问题  |
-| v5.0| imageArray中的图片可设置圆形图片------circleSet属性，详见2.0.2  |
-| v4.0| imageArray属性新增infoCallBack属性，该属性类型为Function, 接受一个对象，该对象是该项图片的图片信息，该方法需返回一个对象，对象里的属性可以是原本imageArray中项内属性除url外的所有属性，infoCallBack返回的对象属性会覆盖原先的属性, 获取自身的图片信息后可以更好的绘制海报啦~   |
-| v3.0| `修复背景图存储本地机制, 建议更新`， 背景图从后端获取后会以‘/’字符分割后的最后一位为name，QS-SharePoster会判断此name是不是和本地相同，若不同则从后端获取重新生成，若相同则使用本地路径，name判断通过后，还会判断图片宽高信息，不通过则重新获取，所以， 若后端需换背景图，则将新上传的图片命名不要相同与前一次, 或宽高不同于前一次即可 |
-| v2.0| 新增backgroudImage、type属性，完善文档  |
