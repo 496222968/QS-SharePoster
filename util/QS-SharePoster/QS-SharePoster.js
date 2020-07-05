@@ -1,5 +1,6 @@
 import _app from './app.js';
 import QRCodeAlg from './QRCodeAlg.js';
+import { base64ToPath } from './image-tools.js';
 const ShreUserPosterBackgroundKey = 'ShrePosterBackground_'; // 背景图片缓存名称前缀
 const idKey = 'QSSHAREPOSTER_IDKEY'; //drawArray自动生成的idkey
 var isMp = false;
@@ -85,8 +86,9 @@ function returnPromise(obj) {
 					return params.bgObj;
 				},
 				setBgObj: function(newBgObj){
-					params.bgObj = newBgObj;
-					bgObj = newBgObj
+					const n = {...params.bgObj, ...newBgObj};
+					params.bgObj = n;
+					bgObj = n;
 				}
 			};
 			if (imagesArray) {
@@ -143,6 +145,14 @@ function returnPromise(obj) {
 									};
 								break;
 							case 'custom':
+								break;
+							case 'fillrect':
+								break;
+							case 'strokeRect':
+								break;
+							case 'roundStrokeRect':
+								break;
+							case 'roundFillRect':
 								break;
 							default:
 								_app.log('未识别的类型');
@@ -310,6 +320,22 @@ function drawShareImage(obj) { //绘制海报方法
 							_app.log('绘制可控层级序列, 绘制自定义内容');
 							if (drawArrayItem.setDraw && typeof drawArrayItem.setDraw === 'function')
 								drawArrayItem.setDraw(Context);
+							break;drawRoundStrokeRect, drawStrokeRect
+						case 'fillRect':
+							_app.log('绘制可控层级序列, 绘制填充直角矩形');
+							drawFillRect(Context, drawArrayItem);
+							break;
+						case 'strokeRect':
+							_app.log('绘制可控层级序列, 绘制线条直角矩形');
+							drawStrokeRect(Context, drawArrayItem);
+							break;
+						case 'roundStrokeRect':
+							_app.log('绘制可控层级序列, 绘制线条圆角矩形');
+							drawRoundStrokeRect(Context, drawArrayItem);
+							break;
+						case 'roundFillRect':
+							_app.log('绘制可控层级序列, 绘制填充圆角矩形');
+							drawRoundFillRect(Context, drawArrayItem);
 							break;
 						default:
 							_app.log('未识别的类型');
@@ -327,23 +353,13 @@ function drawShareImage(obj) { //绘制海报方法
 					if (setObj && typeof(setObj) == 'function')
 						setObj = setCanvasToTempFilePath(bgObj, type);
 					let canvasToTempFilePathFn;
-					// #ifdef H5
-					canvasToTempFilePathFn = function() {
-						_app.hideLoading();
-						rs({
-							tempFilePath: document.querySelector(`uni-canvas[canvas-id=${posterCanvasId}]>canvas`).toDataURL(
-								`image/${setObj.fileType||'jpg'}`, setObj.quality || .8)
-						});
-					}
-					// #endif
-					// #ifndef H5
 					const data = {
 						x: 0,
 						y: 0,
 						width: bgObj.width,
 						height: bgObj.height,
-						destWidth: bgObj.width * 2, // 若H5使用这里请不要乘以二
-						destHeight: bgObj.height * 2, // 若H5使用这里请不要乘以二
+						destWidth: bgObj.width, // 若H5使用这里请不要乘以二
+						destHeight: bgObj.height, // 若H5使用这里请不要乘以二
 						quality: .8,
 						fileType: 'jpg',
 						...setObj
@@ -365,7 +381,6 @@ function drawShareImage(obj) { //绘制海报方法
 						}
 						uni.canvasToTempFilePath(toTempFilePathObj, _this || null);
 					}
-					// #endif
 					let delayTime = 0;
 					if (qrCodeArray) {
 						qrCodeArray.forEach(item => {
@@ -410,6 +425,67 @@ function drawShareImage(obj) { //绘制海报方法
 			rj(e);
 		}
 	});
+}
+
+// export
+function drawFillRect(Context, drawArrayItem = {}) {	//填充矩形
+	_app.log('进入绘制填充直角矩形方法, drawArrayItem:' + JSON.stringify(drawArrayItem));
+	Context.setFillStyle(drawArrayItem.backgroundColor || 'black');
+	Context.setGlobalAlpha(drawArrayItem.alpha || 1);
+	Context.fillRect(drawArrayItem.dx || 0, drawArrayItem.dy || 0, drawArrayItem.width || 0, drawArrayItem.height || 0);
+	Context.setGlobalAlpha(1);
+}
+
+// export
+function drawStrokeRect(Context, drawArrayItem = {}) {	//线条矩形
+	Context.setStrokeStyle(drawArrayItem.color||'black');
+	Context.setLineWidth(drawArrayItem.lineWidth || 1);
+	Context.strokeRect(drawArrayItem.dx, drawArrayItem.dy, drawArrayItem.width, drawArrayItem.height);
+}
+
+// export
+function drawRoundStrokeRect(Context, drawArrayItem = {}) {
+	let { dx, dy, width, height, r, lineWidth, color } = drawArrayItem;
+	r = r || width * .1;
+
+	if (width < 2 * r) {
+		r = width / 2;
+	}
+	if (width < 2 * r) {
+		r = width / 2;
+	}
+	Context.beginPath();
+	Context.moveTo(dx + r, dy);
+	Context.arcTo(dx + width, dy, dx + width, dy + height, r);
+	Context.arcTo(dx + width, dy + height, dx, dy + height, r);
+	Context.arcTo(dx, dy + height, dx, dy, r);
+	Context.arcTo(dx, dy, dx + width, dy, r);
+	Context.closePath();
+	Context.setLineWidth(lineWidth || 1);
+	Context.setStrokeStyle(color || 'black');
+	Context.stroke();
+}
+
+// export
+function drawRoundFillRect(Context, drawArrayItem = {}) {
+	let { dx, dy, width, height, r, backgroundColor } = drawArrayItem;
+	r = r || width * .1;
+
+	if (width < 2 * r) {
+		r = width / 2;
+	}
+	if (width < 2 * r) {
+		r = width / 2;
+	}
+	Context.beginPath();
+	Context.moveTo(dx + r, dy);
+	Context.arcTo(dx + width, dy, dx + width, dy + height, r);
+	Context.arcTo(dx + width, dy + height, dx, dy + height, r);
+	Context.arcTo(dx, dy + height, dx, dy, r);
+	Context.arcTo(dx, dy, dx + width, dy, r);
+	Context.closePath();
+	Context.setFillStyle(backgroundColor);
+	Context.fill();
 }
 
 // export 
@@ -700,9 +776,18 @@ function setImage(images) { // 设置图片数据
 	})
 }
 
+function base64ToPathFn(path) {
+	var reg = /^\s*data:([a-z]+\/[a-z0-9-+.]+(;[a-z-]+=[a-z0-9-]+)?)?(;base64)?,([a-z0-9!$&',()*+;=\-._~:@\/?%\s]*?)\s*$/i;
+	if(!reg.test(path)){
+	  return Promise.resolve(path);
+	}
+	return base64ToPath(path);
+}
+
 function setImageFn(image) {
 	return new Promise(async (resolve, reject) => {
 		if (image.url) {
+			image.url = (await base64ToPathFn(image.url));
 			let imgUrl = image.url;
 			imgUrl = await _app.downloadFile_PromiseFc(imgUrl);
 			image.url = imgUrl;
@@ -941,10 +1026,11 @@ function drawImageFn(Context, img) {
 		_app.log('绘制默认图片方法, 有url');
 		if (img.dWidth && img.dHeight && img.sx && img.sy && img.sWidth && img.sHeight) {
 			_app.log('绘制默认图片方法, 绘制第一种方案');
-			Context.drawImage(img.url, Number(img.dx || 0), Number(img.dy || 0),
-				Number(img.dWidth) || false, Number(img.dHeight) || false,
-				Number(img.sx) || false, Number(img.sy) || false,
-				Number(img.sWidth) || false, Number(img.sHeight) || false);
+			Context.drawImage(img.url, 
+			Number(img.sx) || false, Number(img.sy) || false, 
+			Number(img.sWidth) || false, Number(img.sHeight) || false,
+			Number(img.dx || 0), Number(img.dy || 0),
+			Number(img.dWidth) || false, Number(img.dHeight) || false,);
 		} else if (img.dWidth && img.dHeight) {
 			_app.log('绘制默认图片方法, 绘制第二种方案');
 			Context.drawImage(img.url, Number(img.dx || 0), Number(img.dy || 0),
@@ -1183,60 +1269,35 @@ function getShreUserPosterBackgroundFc(objs, upimage) { //下载并保存背景�
 	return new Promise(async (resolve, reject) => {
 		try {
 			_app.showLoading('正在下载海报背景图');
-			if (upimage) {
-				_app.log('有从后端获取的背景图片路径');
-				_app.log('尝试下载并保存背景图');
-				const name = _app.fileNameInPath(upimage);
-				const savedFilePath = await _app.downLoadAndSaveFile_PromiseFc(upimage);
-				if (savedFilePath) {
-					_app.log('下载并保存背景图成功:' + savedFilePath);
-					const imageObj = await _app.getImageInfo_PromiseFc(savedFilePath);
-					const returnObj = {
-						path: savedFilePath,
-						width: imageObj.width,
-						height: imageObj.height,
-						name
-					}
-					// #ifndef H5
-					setPosterStorage(type, { ...returnObj
-					});
-					// #endif
-					_app.hideLoading();
-					resolve(returnObj);
-				} else {
-					_app.hideLoading();
-					reject('not find savedFilePath');
+			_app.log('没有从后端获取的背景图片路径, 尝试从后端获取背景图片路径');
+			let image = backgroundImage?backgroundImage:(await _app.getPosterUrl(objs));
+			image = (await base64ToPathFn(image));
+			_app.log('尝试下载并保存背景图:' + image);
+			const savedFilePath = await _app.downLoadAndSaveFile_PromiseFc(image);
+			if (savedFilePath) {
+				_app.log('下载并保存背景图成功:' + savedFilePath);
+				const imageObj = await _app.getImageInfo_PromiseFc(savedFilePath);
+				_app.log('获取图片信息成功');
+				const returnObj = {
+					path: savedFilePath,
+					width: imageObj.width,
+					height: imageObj.height,
+					name: _app.fileNameInPath(image)
 				}
+				_app.log('拼接背景图信息对象成功:' + JSON.stringify(returnObj));
+
+				// #ifndef H5
+				setPosterStorage(type, { ...returnObj
+				});
+				// #endif
+
+				_app.hideLoading();
+				_app.log('返回背景图信息对象');
+				resolve({ ...returnObj
+				});
 			} else {
-				_app.log('没有从后端获取的背景图片路径, 尝试从后端获取背景图片路径');
-				const image = await _app.getPosterUrl(objs);
-				_app.log('尝试下载并保存背景图:' + image);
-				const savedFilePath = await _app.downLoadAndSaveFile_PromiseFc(image);
-				if (savedFilePath) {
-					_app.log('下载并保存背景图成功:' + savedFilePath);
-					const imageObj = await _app.getImageInfo_PromiseFc(savedFilePath);
-					_app.log('获取图片信息成功');
-					const returnObj = {
-						path: savedFilePath,
-						width: imageObj.width,
-						height: imageObj.height,
-						name: _app.fileNameInPath(image)
-					}
-					_app.log('拼接背景图信息对象成功:' + JSON.stringify(returnObj));
-
-					// #ifndef H5
-					setPosterStorage(type, { ...returnObj
-					});
-					// #endif
-
-					_app.hideLoading();
-					_app.log('返回背景图信息对象');
-					resolve({ ...returnObj
-					});
-				} else {
-					_app.hideLoading();
-					reject('not find savedFilePath');
-				}
+				_app.hideLoading();
+				reject('not find savedFilePath');
 			}
 		} catch (e) {
 			//TODO handle the exception
@@ -1252,5 +1313,9 @@ module.exports = {
 	setImage,
 	drawText,
 	drawImage,
-	drawQrCode
+	drawQrCode,
+	drawFillRect,
+	drawStrokeRect,
+	drawRoundStrokeRect,
+	drawRoundFillRect
 }

@@ -54,11 +54,11 @@
 						},
 						posterCanvasId: this.canvasId,	//canvasId
 						delayTimeScale: 20, //延时系数
-						/* background: {
-							width: 1080,
-							height: 1920,
-							backgroundColor: '#666'
-						}, */
+						// background: {
+						// 	width: 1080,
+						// 	height: 1920,
+						// 	backgroundColor: '#666'
+						// },
 						drawArray: ({
 							bgObj,
 							type,

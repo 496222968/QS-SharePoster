@@ -1,5 +1,5 @@
 let log = console.log; // 如果在项目的APP.vue文件中的onlaunch中设置 console.log = ()=> {} 则在此也不会有打印信息
-log = ()=>{};	// 打开注释则该插件不会打印任何信息
+// log = ()=>{};	// 打开注释则该插件不会打印任何信息
 let _app = {
 	//交互控制
 	log(t) {
@@ -543,13 +543,16 @@ let _app = {
 
 function checkMPUrl(url) {
 	// #ifdef MP
-	if(
-		url.substring(0, 4) === 'http' && 
-		url.substring(0, 12) !== 'http://store' && 
-		url.substring(0, 10) !== 'http://tmp' && 
-		url.substring(0, 5) !== 'https'
-	) {
-		url = 'https' + url.substring(4, url.length);
+	if(process.env.NODE_ENV !== 'development'){
+		if(
+			url.substring(0, 4) === 'http' && 
+			url.substring(0, 5) !== 'https' && 
+			url.substring(0, 12) !== 'http://store' && 
+			url.substring(0, 10) !== 'http://tmp' && 
+			url.substring(0, 10) !== 'http://usr'
+		) {
+			url = 'https' + url.substring(4, url.length);
+		}
 	}
 	// #endif
 	return url;
