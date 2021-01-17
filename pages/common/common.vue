@@ -24,17 +24,17 @@
 		<!-- 生成海报 -->
 		<button type="primary" @tap="shareFc()">生成海报</button>
 		<!-- 图片展示由自己实现 -->
-		<view class="flex_row_c_c modalView" :class="qrShow?'show':''" @tap="hideQr()">
+		<QSPopup ref="popup">
 			<view class="flex_column">
 				<view class="backgroundColor-white padding1vh border_radius_10px">
-					<image :src="poster.finalPath || ''" mode="widthFix" class="posterImage"></image>
+					<image :src="posterImage || ''" mode="widthFix" class="posterImage"></image>
 				</view>
 				<view class="flex_row marginTop2vh">
 					<button type="primary" size="mini" @tap.prevent.stop="saveImage()">保存图片</button>
 					<button type="primary" size="mini" @tap.prevent.stop="share()">分享图片</button>
 				</view>
 			</view>
-		</view>
+		</QSPopup>
 		<!-- 画布 -->
 		<view class="hideCanvasView">
 			<canvas class="hideCanvas" canvas-id="default_PosterCanvasId" :style="{width: (poster.width||10) + 'px', height: (poster.height||10) + 'px'}"></canvas>
@@ -51,7 +51,7 @@
 		data() {
 			return {
 				poster: {},
-				qrShow: false,
+				posterImage: '',
 				canvasId: 'default_PosterCanvasId'
 			}
 		},
@@ -196,8 +196,8 @@
 						}
 					});
 					_app.log('海报生成成功, 时间:' + new Date() + '， 临时路径: ' + d.poster.tempFilePath)
-					this.poster.finalPath = d.poster.tempFilePath;
-					this.qrShow = true;
+					this.posterImage = d.poster.tempFilePath;
+					this.$refs.popup.show()
 				} catch (e) {
 					_app.hideLoading();
 					_app.showToast(JSON.stringify(e));
@@ -227,7 +227,7 @@
 				// #endif
 			},
 			hideQr() {
-				this.qrShow = false;
+				this.$refs.popup.hide()
 			}
 		}
 	}

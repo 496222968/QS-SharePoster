@@ -34,7 +34,7 @@ base64工具使用了 `瞳player` 的[image-tools](https://ext.dcloud.net.cn/plu
 * ### [qrcode-二维码](#qrcode)
 * ### [custom-自定义绘制](#custom)
 * ### v3.0.6 新增
-* ### [fillrect-填充矩形](#fillrect)
+* ### [fillRect-填充矩形](#fillRect)
 * ### [strokeRect-线性矩形](#strokeRect)
 * ### [roundStrokeRect-线性圆角矩形](#roundStrokeRect)
 * ### [roundFillRect-填充圆角矩形](#roundFillRect)
@@ -209,8 +209,8 @@ setCanvasWH: ({bgObj, type, bgScale}) => { // 为动态设置画布宽高的方�
 | `type为custom时`| | |  | 参数详见[`custom`](#custom) |
 | setDraw| | |  | 该属性传入一个方法，接收一个参数-画布对象，可在方法中自定义绘制内容|
 | `v3.0.6更新` | |  | |   |
-| `type为fillrect时`| | |  |  |
-|... | | |  | 参数详见[`fillrect`](#fillrect) |
+| `type为fillRect时`| | |  |  |
+|... | | |  | 参数详见[`fillRect`](#fillRect) |
 | `type为strokeRect时`| | |  |  |
 |... | | |  | 参数详见[`strokeRect`](#strokeRect) |
 | `type为roundStrokeRect时`| | |  |  |
@@ -262,6 +262,8 @@ setCanvasWH: ({bgObj, type, bgScale}) => { // 为动态设置画布宽高的方�
 | roundRectSet(v16.0新增)| |  Object\|Boolean | | 圆角矩形图片设置 |
 | `v3.0.1 新增`| | | | |
 | alpha| |  Number | 1| 图片的透明度, 取值: [0, 1] |
+| `v3.0.8 新增`| | | | |
+| mode| |  String | scaleToFill| 同uni image组件的mode属性, 目前支持 scaleToFill、aspectFit、aspectFill |
 
 ### circleSet属性详解
 | 属性名 | 是否必填 | 值类型 | 默认值 | 说明 |
@@ -369,7 +371,7 @@ r的默认值先判断是否有dWidth和dHeight,若有则取两者之间值较�
 
 
 
-## fillrect类型(填充直角矩形) <span id="fillrect" />
+## fillRect类型(填充直角矩形) <span id="fillRect" />
 
 | 属性名 | 是否必填 | 值类型 | 默认值 | 说明 |
 | --------- | -------- | -----: | --: | --: |

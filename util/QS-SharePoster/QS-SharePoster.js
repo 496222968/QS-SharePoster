@@ -1,6 +1,8 @@
 import _app from './app.js';
 import QRCodeAlg from './QRCodeAlg.js';
-import { base64ToPath } from './image-tools.js';
+import {
+	base64ToPath
+} from './image-tools.js';
 const ShreUserPosterBackgroundKey = 'ShrePosterBackground_'; // 背景图片缓存名称前缀
 const idKey = 'QSSHAREPOSTER_IDKEY'; //drawArray自动生成的idkey
 var isMp = false;
@@ -18,9 +20,9 @@ function getSharePoster(obj) {
 		} catch (e) {
 			//TODO handle the exception
 			try {
-				if(obj.bgScale) {
+				if (obj.bgScale) {
 					obj.bgScale = Number(obj.bgScale) - 0.1
-				}else{
+				} else {
 					nbgScale = nbgScale - 0.1
 				}
 				console.log('------------清除缓存后, 开始第二次尝试------------');
@@ -85,8 +87,10 @@ function returnPromise(obj) {
 				getBgObj: function() {
 					return params.bgObj;
 				},
-				setBgObj: function(newBgObj){
-					const n = {...params.bgObj, ...newBgObj};
+				setBgObj: function(newBgObj) {
+					const n = { ...params.bgObj,
+						...newBgObj
+					};
 					params.bgObj = n;
 					bgObj = n;
 				}
@@ -199,9 +203,9 @@ function returnPromise(obj) {
 			}
 			console.log('params:' + JSON.stringify(params))
 			if (setCanvasWH && typeof(setCanvasWH) == 'function') {
-				await new Promise((resolve, reject)=>{
+				await new Promise((resolve, reject) => {
 					setCanvasWH(params);
-					setTimeout(()=>{
+					setTimeout(() => {
 						resolve();
 					}, 50)
 				})
@@ -320,7 +324,8 @@ function drawShareImage(obj) { //绘制海报方法
 							_app.log('绘制可控层级序列, 绘制自定义内容');
 							if (drawArrayItem.setDraw && typeof drawArrayItem.setDraw === 'function')
 								drawArrayItem.setDraw(Context);
-							break;drawRoundStrokeRect, drawStrokeRect
+							break;
+							drawRoundStrokeRect, drawStrokeRect
 						case 'fillRect':
 							_app.log('绘制可控层级序列, 绘制填充直角矩形');
 							drawFillRect(Context, drawArrayItem);
@@ -347,24 +352,25 @@ function drawShareImage(obj) { //绘制海报方法
 			setTimeout(() => {
 				_app.log('准备执行draw方法')
 				_app.log('Context:' + Context);
-				const fn = function(){
+				const fn = function() {
 					_app.showLoading('正在输出图片');
 					let setObj = setCanvasToTempFilePath || {};
 					if (setObj && typeof(setObj) == 'function')
 						setObj = setCanvasToTempFilePath(bgObj, type);
 					let canvasToTempFilePathFn;
+					const dpr = uni.getSystemInfoSync().pixelRatio;
 					const data = {
 						x: 0,
 						y: 0,
-						width: bgObj.width,
-						height: bgObj.height,
-						destWidth: bgObj.width, // 若H5使用这里请不要乘以二
-						destHeight: bgObj.height, // 若H5使用这里请不要乘以二
+						width: Number(bgObj.width),
+						height: Number(bgObj.height),
+						destWidth: Number(bgObj.width) * dpr,
+						destHeight: Number(bgObj.height) * dpr,
 						quality: .8,
 						fileType: 'jpg',
 						...setObj
 					};
-					_app.log('canvasToTempFilePath的data对象:' + JSON.stringify(data));
+					console.log('canvasToTempFilePath的data对象:' + JSON.stringify(data));
 					canvasToTempFilePathFn = function() {
 						const toTempFilePathObj = { //输出为图片
 							...data,
@@ -375,6 +381,7 @@ function drawShareImage(obj) { //绘制海报方法
 							},
 							fail(err) {
 								_app.hideLoading();
+								console.log('输出图片失败');
 								_app.log('输出图片失败:' + JSON.stringify(err));
 								rj('输出图片失败:' + JSON.stringify(err))
 							}
@@ -407,6 +414,11 @@ function drawShareImage(obj) { //绘制海报方法
 										delayTime += item.text.length;
 									}
 									break;
+								case 'qrcode':
+									if (item.text) {
+										delayTime += item.text.length*2;
+									}
+									break;
 								default:
 									delayTime += delayTimeScale;
 									break;
@@ -428,7 +440,7 @@ function drawShareImage(obj) { //绘制海报方法
 }
 
 // export
-function drawFillRect(Context, drawArrayItem = {}) {	//填充矩形
+function drawFillRect(Context, drawArrayItem = {}) { //填充矩形
 	_app.log('进入绘制填充直角矩形方法, drawArrayItem:' + JSON.stringify(drawArrayItem));
 	Context.setFillStyle(drawArrayItem.backgroundColor || 'black');
 	Context.setGlobalAlpha(drawArrayItem.alpha || 1);
@@ -437,15 +449,23 @@ function drawFillRect(Context, drawArrayItem = {}) {	//填充矩形
 }
 
 // export
-function drawStrokeRect(Context, drawArrayItem = {}) {	//线条矩形
-	Context.setStrokeStyle(drawArrayItem.color||'black');
+function drawStrokeRect(Context, drawArrayItem = {}) { //线条矩形
+	Context.setStrokeStyle(drawArrayItem.color || 'black');
 	Context.setLineWidth(drawArrayItem.lineWidth || 1);
 	Context.strokeRect(drawArrayItem.dx, drawArrayItem.dy, drawArrayItem.width, drawArrayItem.height);
 }
 
 // export
 function drawRoundStrokeRect(Context, drawArrayItem = {}) {
-	let { dx, dy, width, height, r, lineWidth, color } = drawArrayItem;
+	let {
+		dx,
+		dy,
+		width,
+		height,
+		r,
+		lineWidth,
+		color
+	} = drawArrayItem;
 	r = r || width * .1;
 
 	if (width < 2 * r) {
@@ -455,11 +475,14 @@ function drawRoundStrokeRect(Context, drawArrayItem = {}) {
 		r = width / 2;
 	}
 	Context.beginPath();
-	Context.moveTo(dx + r, dy);
-	Context.arcTo(dx + width, dy, dx + width, dy + height, r);
-	Context.arcTo(dx + width, dy + height, dx, dy + height, r);
-	Context.arcTo(dx, dy + height, dx, dy, r);
-	Context.arcTo(dx, dy, dx + width, dy, r);
+	Context.arc(dx + r, dy + r, r, 1 * Math.PI, 1.5 * Math.PI);
+	Context.lineTo(dx + width - r, dy);
+	Context.arc(dx + width - r, dy + r, r, 1.5 * Math.PI, 0);
+	Context.lineTo(dx + width, dy + height - r);
+	Context.arc(dx + width - r, dy + height - r, r, 0, .5 * Math.PI);
+	Context.lineTo(dx + r, dy + height);
+	Context.arc(dx + r, dy + height - r, r, .5 * Math.PI, 1 * Math.PI);
+	Context.lineTo(dx, dy + r);
 	Context.closePath();
 	Context.setLineWidth(lineWidth || 1);
 	Context.setStrokeStyle(color || 'black');
@@ -468,7 +491,14 @@ function drawRoundStrokeRect(Context, drawArrayItem = {}) {
 
 // export
 function drawRoundFillRect(Context, drawArrayItem = {}) {
-	let { dx, dy, width, height, r, backgroundColor } = drawArrayItem;
+	let {
+		dx,
+		dy,
+		width,
+		height,
+		r,
+		backgroundColor
+	} = drawArrayItem;
 	r = r || width * .1;
 
 	if (width < 2 * r) {
@@ -478,11 +508,14 @@ function drawRoundFillRect(Context, drawArrayItem = {}) {
 		r = width / 2;
 	}
 	Context.beginPath();
-	Context.moveTo(dx + r, dy);
-	Context.arcTo(dx + width, dy, dx + width, dy + height, r);
-	Context.arcTo(dx + width, dy + height, dx, dy + height, r);
-	Context.arcTo(dx, dy + height, dx, dy, r);
-	Context.arcTo(dx, dy, dx + width, dy, r);
+	Context.arc(dx + r, dy + r, r, 1 * Math.PI, 1.5 * Math.PI);
+	Context.lineTo(dx + width - r, dy);
+	Context.arc(dx + width - r, dy + r, r, 1.5 * Math.PI, 0);
+	Context.lineTo(dx + width, dy + height - r);
+	Context.arc(dx + width - r, dy + height - r, r, 0, .5 * Math.PI);
+	Context.lineTo(dx + r, dy + height);
+	Context.arc(dx + r, dy + height - r, r, .5 * Math.PI, 1 * Math.PI);
+	Context.lineTo(dx, dy + r);
 	Context.closePath();
 	Context.setFillStyle(backgroundColor);
 	Context.fill();
@@ -547,9 +580,9 @@ function countTextLength(Context, obj) {
 	} = obj;
 	Context.setFontSize(size);
 	let textLength;
-	try{
+	try {
 		textLength = Context.measureText(text); // 官方文档说 App端自定义组件编译模式暂时不可用measureText方法
-	}catch(e){
+	} catch (e) {
 		//TODO handle the exception
 		textLength = {};
 	}
@@ -778,8 +811,8 @@ function setImage(images) { // 设置图片数据
 
 function base64ToPathFn(path) {
 	var reg = /^\s*data:([a-z]+\/[a-z0-9-+.]+(;[a-z-]+=[a-z0-9-]+)?)?(;base64)?,([a-z0-9!$&',()*+;=\-._~:@\/?%\s]*?)\s*$/i;
-	if(!reg.test(path)){
-	  return Promise.resolve(path);
+	if (!reg.test(path)) {
+		return Promise.resolve(path);
 	}
 	return base64ToPath(path);
 }
@@ -1017,6 +1050,57 @@ function readyDrawImageFn(Context, img) {
 	}
 }
 
+const drawImageModes = {
+	scaleToFill(Context, img) {
+		_app.log('准备绘制mode为scaleToFill的图片')
+		Context.drawImage(img.url, Number(img.dx || 0), Number(img.dy || 0),
+				Number(img.dWidth) || false, Number(img.dHeight) || false);
+		_app.log('mode为scaleToFill的图片绘制完毕')
+	},
+	aspectFit(Context, img) {
+		_app.log('准备绘制mode为aspectFit的图片')
+		const { imageInfo, dWidth, dHeight } = img;
+		const { height, width } = imageInfo;
+		let drawWidth = dWidth;
+		let drawHeight = height / width * drawWidth;
+		if(drawHeight < dHeight) {
+			const diffHeight = (Number(dHeight) - Number(drawHeight))/Number(dHeight)*height;
+			img.dy = Number(img.dy) + diffHeight/2;
+		}else{
+			drawHeight = dHeight;
+			drawWidth = width / height * drawHeight;
+			const diffWidth = (Number(dWidth) - Number(drawWidth))/Number(dWidth)*width;
+			img.dx = Number(img.dx) + diffWidth/2;
+		}
+		Context.drawImage(img.url, 0, 0, width, height, img.dx, img.dy, drawWidth, drawHeight);
+		_app.log('mode为aspectFit的图片绘制完毕')
+	},
+	aspectFill(Context, img) {
+		const dpr = uni.getSystemInfoSync().pixelRatio;
+		_app.log('准备绘制mode为aspectFill的图片')
+		const { imageInfo, dWidth, dHeight } = img;
+		const { height, width } = imageInfo;
+		let sx = 0,sy = 0, sWidth = (width), sHeight = (height);
+		let drawWidth = dWidth;
+		let drawHeight = height / width * drawWidth;
+		if(drawHeight < dHeight) {
+			console.log('绘制高度 小于 预定高度')
+			drawHeight = dHeight;
+			drawWidth = width / height * drawHeight;
+			const diffWidth = ((Number(drawWidth) - Number(dWidth))/Number(drawWidth))*width;
+			sx = diffWidth / 2;
+			sWidth = width - diffWidth;
+		}else{
+			const diffHeight = ((Number(drawHeight) - Number(dHeight))/Number(drawHeight))*height;
+			sy = diffHeight / 2;
+			sHeight = (height - diffHeight);
+		}
+		_app.log(`aspectFill 最终绘制: sx: ${sx}, sy: ${sy}, sWidth: ${sWidth}, sHeight: ${sHeight}, dx: ${img.dx}, dy: ${img.dy}, dWidth: ${dWidth}, dHeight: ${dHeight}`)
+		Context.drawImage(img.url, sx, sy, sWidth, sHeight, img.dx, img.dy, dWidth, dHeight);
+		_app.log('mode为aspectFill的图片绘制完毕')
+	}
+}
+
 function drawImageFn(Context, img) {
 	_app.log('进入绘制默认图片方法, img:' + JSON.stringify(img));
 	if (img.url) {
@@ -1024,20 +1108,27 @@ function drawImageFn(Context, img) {
 		img.alpha = Number(!_app.isUndef(img.alpha) ? img.alpha : 1);
 		Context.setGlobalAlpha(img.alpha);
 		_app.log('绘制默认图片方法, 有url');
-		if (img.dWidth && img.dHeight && img.sx && img.sy && img.sWidth && img.sHeight) {
-			_app.log('绘制默认图片方法, 绘制第一种方案');
-			Context.drawImage(img.url, 
-			Number(img.sx) || false, Number(img.sy) || false, 
-			Number(img.sWidth) || false, Number(img.sHeight) || false,
-			Number(img.dx || 0), Number(img.dy || 0),
-			Number(img.dWidth) || false, Number(img.dHeight) || false,);
-		} else if (img.dWidth && img.dHeight) {
-			_app.log('绘制默认图片方法, 绘制第二种方案');
-			Context.drawImage(img.url, Number(img.dx || 0), Number(img.dy || 0),
-				Number(img.dWidth) || false, Number(img.dHeight) || false);
-		} else {
-			_app.log('绘制默认图片方法, 绘制第三种方案');
-			Context.drawImage(img.url, Number(img.dx || 0), Number(img.dy || 0));
+		if(img.dHeight === undefined) img.dHeight = img.imageInfo.height;
+		if(img.dWidth === undefined) img.dWidth = img.imageInfo.width;
+		const fn = drawImageModes[img.mode];
+		if(fn) {
+			fn(Context, img);
+		}else{
+			if (img.dWidth && img.dHeight && img.sx && img.sy && img.sWidth && img.sHeight) {
+				_app.log('绘制默认图片方法, 绘制第一种方案');
+				Context.drawImage(img.url, 
+				Number(img.sx) || false, Number(img.sy) || false, 
+				Number(img.sWidth) || false, Number(img.sHeight) || false,
+				Number(img.dx || 0), Number(img.dy || 0),
+				Number(img.dWidth) || false, Number(img.dHeight) || false,);
+			} else if (img.dWidth && img.dHeight) {
+				_app.log('绘制默认图片方法, 绘制第二种方案');
+				Context.drawImage(img.url, Number(img.dx || 0), Number(img.dy || 0),
+					Number(img.dWidth) || false, Number(img.dHeight) || false);
+			} else {
+				_app.log('绘制默认图片方法, 绘制第三种方案');
+				Context.drawImage(img.url, Number(img.dx || 0), Number(img.dy || 0));
+			}
 		}
 		if (hasAlpha) {
 			Context.setGlobalAlpha(1);
@@ -1108,11 +1199,21 @@ function drawRoundRectImage(Context, obj) { // 绘制矩形
 		r = dHeight / 2;
 	}
 	Context.beginPath();
-	Context.moveTo(dx + r, dy);
-	Context.arcTo(dx + dWidth, dy, dx + dWidth, dy + dHeight, r);
-	Context.arcTo(dx + dWidth, dy + dHeight, dx, dy + dHeight, r);
-	Context.arcTo(dx, dy + dHeight, dx, dy, r);
-	Context.arcTo(dx, dy, dx + dWidth, dy, r);
+
+	// Context.moveTo(dx + r, dy);
+	Context.arc(dx + r, dy + r, r, 1 * Math.PI, 1.5 * Math.PI);
+	Context.lineTo(dx + dWidth - r, dy);
+	Context.arc(dx + dWidth - r, dy + r, r, 1.5 * Math.PI, 0);
+	Context.lineTo(dx + dWidth, dy + dHeight - r);
+	Context.arc(dx + dWidth - r, dy + dHeight - r, r, 0, .5 * Math.PI);
+	Context.lineTo(dx + r, dy + dHeight);
+	Context.arc(dx + r, dy + dHeight - r, r, .5 * Math.PI, 1 * Math.PI);
+	Context.lineTo(dx, dy + r);
+
+	// Context.arcTo(dx + dWidth, dy, dx + dWidth, dy + dHeight, r);
+	// Context.arcTo(dx + dWidth, dy + dHeight, dx, dy + dHeight, r);
+	// Context.arcTo(dx, dy + dHeight, dx, dy, r);
+	// Context.arcTo(dx, dy, dx + dWidth, dy, r);
 	Context.closePath();
 	Context.setGlobalAlpha(0);
 	Context.fillStyle = '#FFFFFF';
@@ -1270,7 +1371,7 @@ function getShreUserPosterBackgroundFc(objs, upimage) { //下载并保存背景�
 		try {
 			_app.showLoading('正在下载海报背景图');
 			_app.log('没有从后端获取的背景图片路径, 尝试从后端获取背景图片路径');
-			let image = backgroundImage?backgroundImage:(await _app.getPosterUrl(objs));
+			let image = backgroundImage ? backgroundImage : (await _app.getPosterUrl(objs));
 			image = (await base64ToPathFn(image));
 			_app.log('尝试下载并保存背景图:' + image);
 			const savedFilePath = await _app.downLoadAndSaveFile_PromiseFc(image);
